@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, Input, Button, message } from 'antd';
+import { useHistory } from "react-router-dom";
 
 const formItemLayout = {
   labelCol: { xs: { span: 24 }, sm: { span: 6 } },
@@ -8,20 +9,6 @@ const formItemLayout = {
 const tailFormItemLayout = {
   wrapperCol: { xs: { span: 24, offset: 0 }, sm: { span: 16, offset: 6 } },
 };
-
-function status(response) {
-  if (response.status >= 200 && response.status < 300) {
-    return response;
-  } else {
-    return new Promise((resolve, reject) => {
-      return reject(response);
-    });
-  }
-}
-
-function json(response) {
-  return response.json();
-}
 
 const emailRules = [
   { type: 'email', message: 'The input is not valid E-mail!' },
@@ -61,62 +48,64 @@ const lastNameRules = [
   { pattern: /^[^\d]+$/, message: 'Last name MUST NOT contain numbers' }
 ];
 
-class Register extends React.Component {
-  handleSubmit = async (values) => {
+const Register = () => {
+  const history = useHistory();
+
+  const handleSubmit = async (values) => {
     const { ...formData } = values;
 
-    fetch('http://localhost:8001/register', {
-      method: 'POST',
-      body: JSON.stringify(formData),
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    }).then(status)
-      .then(json)
-      .then((data) => {
-        message.success("User registered successfully");
-      })
-      .catch((error) => {
-        message.error("Failed to register user");
+    try {
+      const response = await fetch('http://localhost:8001/register', {
+        method: 'POST',
+        body: JSON.stringify(formData),
+        headers: {
+          'Content-Type': 'application/json',
+        }
       });
-  }
 
-  render() {
-    return (
-      <Form name="register" {...formItemLayout} onFinish={this.handleSubmit}>
+      if (!response.ok) {
+        throw new Error('Failed to register user');
+      }
 
-        <Form.Item name="username" label="Username" rules={usernameRules}>
-          <Input />
-        </Form.Item>
+      message.success("User registered successfully");
+      history.push("/login"); // Redirect to home page after successful registration
 
-        <Form.Item name="email" label="E-mail" rules={emailRules}>
-          <Input />
-        </Form.Item>
+    } catch (error) {
+      message.error("Failed to register user");
+    }
+  };
 
-        <Form.Item name="firstName" label="First name" rules={firstNameRules}>
-          <Input />
-        </Form.Item>
+  return (
+    <Form name="register" {...formItemLayout} onFinish={handleSubmit}>
 
-        <Form.Item name="lastName" label="Last name" rules={lastNameRules}>
-          <Input />
-        </Form.Item>
+      <Form.Item name="username" label="Username" rules={usernameRules}>
+        <Input />
+      </Form.Item>
 
-        <Form.Item name="password" label="Password" rules={passwordRules}>
-          <Input.Password />
-        </Form.Item>
+      <Form.Item name="email" label="E-mail" rules={emailRules}>
+        <Input />
+      </Form.Item>
 
-        <Form.Item name="confirmedPassword" label="Confirm Password" rules={confirmRules}>
-          <Input.Password />
-        </Form.Item>
+      <Form.Item name="fullname" label="Full name" rules={firstNameRules}>
+        <Input />
+      </Form.Item>
 
-        <Form.Item {...tailFormItemLayout}>
-          <Button type="primary" htmlType="submit">
-            Register
-          </Button>
-        </Form.Item>
-      </Form>
-    );
-  }
-}
+     
+      <Form.Item name="password" label="Password" rules={passwordRules}>
+        <Input.Password />
+      </Form.Item>
+
+      <Form.Item name="confirmedPassword" label="Confirm Password" rules={confirmRules}>
+        <Input.Password />
+      </Form.Item>
+
+      <Form.Item {...tailFormItemLayout}>
+        <Button type="primary" htmlType="submit">
+          Register
+        </Button>
+      </Form.Item>
+    </Form>
+  );
+};
 
 export default Register;
